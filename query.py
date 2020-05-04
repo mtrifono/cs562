@@ -87,6 +87,18 @@ with open("input.json", "w") as input:
 
 	print("Having condition G: ", G,'\n') 
 
+	obj = {
+		"cust": 0,
+		"prod": 1,
+		"day" : 2,
+		"month": 3,
+		"year" : 4,
+		"state": 5,
+		"quant": 6,
+	}
+
+	F = F + list(filter(lambda x: (x not in obj) and (x not in F), S)) 
+
 	print("F-vector F: ", F, '\n') 
 
 	inp = {
@@ -103,13 +115,87 @@ with open("input.json", "w") as input:
 # connect to the database
 try:
 	connection = psycopg2.connect(user = "postgres",
-								  password = "masha270896",
+								  password = "",
 								  host = "127.0.0.1",
 								  port = "5432",
 								  database = "postgres")
 	print("\nconnected to postgres\n");
 
 	cursor = connection.cursor()
+	cursor.execute("select * from sales");
+	data = cursor.fetchall()
+
+	#a = ['cust','prod']
+	
+	gb = list(map(lambda x : obj[x],V))
+	#print(gb)
+	partition = {}
+
+	for row in data:
+		l = tuple(map(lambda x: row[x], gb))
+		if l not in partition.keys():
+			partition[l] = [row]
+		else:
+			partition[l] = partition[l] + [row]
+
+	#Computes sum based on the rows and an attribute passed in
+	def sum(rows, attr):
+		sum = 0
+		for row in rows:
+			sum = sum + int(row[obj[attr]])
+		return sum
+
+	#Counts rows
+	def count(rows):
+		return len(rows)
+
+	#Computes avg based on the rows and an attribute passed in
+	def avg(rows,attr):
+		return sum(rows,attr)/count(rows)
+
+	#Computes min 
+	def min(rows, attr):
+		min = rows[0][obj[attr]]
+		for row in rows:
+			if row[obj[attr]] < min:
+				min = row[obj[attr]]
+		return min
+
+	#Computes max
+	def max(rows, attr):
+		max = rows[0][obj[attr]]
+		for row in rows:
+			if row[obj[attr]] > max:
+				max = row[obj[attr]]
+		return max
+
+	print("F", F)
+	print("Sigma", Sigma)
+
+	def compute_aggr(rows, attr, func):
+		if func == 'sum':
+			return sum(rows, attr)
+		elif func == 'count':
+			return count(rows)
+		elif func == 'avg':
+			return avg(rows, attr)
+		elif func == 'min':
+			return min(rows, attr)
+		elif func == 'max':
+			return max(rows, attr)
+
+
+	for key in partition:
+		rows = partition[key]
+		for agr in F:
+			agr = agr.split('_')
+			func = agr[0]
+			gb_var = agr[1]
+			attr = agr[2]
+			print(compute_aggr(rows, attr, func))
+		#print(max(p,'quant'))
+
+
 
 	###### create table
 	# create_table_query = '''CREATE TABLE sales
