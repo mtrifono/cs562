@@ -17,12 +17,14 @@ query = ""
 if is_file:
 	print("file exists")
 	with open(input, 'r') as file:
-		query = file.read().replace('\n', '')
+		query = file.read()
 else:
 	query = input
 
 print("The input query is:", query)
 print("\n\n")
+
+query = query.replace('‘', '').replace('’','').replace("'",'').replace('"','').replace('\t','').replace('\n', '')
 
 # format the input
 S = [] #select attributes
@@ -138,62 +140,159 @@ try:
 		else:
 			partition[l] = partition[l] + [row]
 
+
+	def satisfies(row, condition): #condition passed in the following format [state, = , NJ]
+		sat = False 
+		if (condition[1] == '='):
+			if row[obj[condition[0]]] == condition[2]:
+				sat = True 
+		elif (condition[1] == '>'):
+			if row[obj[condition[0]]] > condition[2]:
+				sat = True  
+		elif (condition[1] == '<'):
+			if row[obj[condition[0]]] < condition[2]:
+				sat = True  
+		return sat
+
 	#Computes sum based on the rows and an attribute passed in
-	def sum(rows, attr):
+	def sum(rows, attr, conditions):
 		sum = 0
 		for row in rows:
-			sum = sum + int(row[obj[attr]])
+			sat = True
+			for c in conditions:
+				if not satisfies(row, c):
+					sat = False
+			if sat:
+				sum = sum + int(row[obj[attr]])
 		return sum
 
 	#Counts rows
-	def count(rows):
-		return len(rows)
+	def count(rows, conditions):
+		if conditions == []:
+			return len(rows)
+		else:
+			count = 0
+			for row in rows:
+				sat = True
+				for c in conditions:
+					if not satisfies(row, c):
+						sat = False
+				if sat:
+					count = count + 1
+			return count
 
 	#Computes avg based on the rows and an attribute passed in
-	def avg(rows,attr):
-		return sum(rows,attr)/count(rows)
+	def avg(rows,attr, conditions):
+		c = count(rows, conditions)
+		if c == 0:
+			return 0
+		s = sum(rows,attr, conditions)
+		return s/c
+
 
 	#Computes min 
-	def min(rows, attr):
-		min = rows[0][obj[attr]]
+	def min(rows, attr, conditions):
+		min = 0
+		for row in rows: 
+			sat = True
+			for c in conditions:
+				if not satisfies(row, c):
+					sat = False
+			min = row[obj[attr]]
+			break
+
 		for row in rows:
-			if row[obj[attr]] < min:
-				min = row[obj[attr]]
+			sat = True
+			for c in conditions:
+				if not satisfies(row, c):
+					sat = False
+			if sat: 		
+				if row[obj[attr]] < min:
+					min = row[obj[attr]]
 		return min
 
 	#Computes max
-	def max(rows, attr):
-		max = rows[0][obj[attr]]
+	def max(rows, attr, conditions):
+		max = 0
+		for row in rows: 
+			sat = True
+			for c in conditions:
+				if not satisfies(row, c):
+					sat = False
+			max = row[obj[attr]]
+			break
+
 		for row in rows:
-			if row[obj[attr]] > max:
-				max = row[obj[attr]]
+			sat = True
+			for c in conditions:
+				if not satisfies(row, c):
+					sat = False
+			if sat: 		
+				if row[obj[attr]] > max:
+					max = row[obj[attr]]
 		return max
 
 	print("F", F)
 	print("Sigma", Sigma)
 
-	def compute_aggr(rows, attr, func):
+	def compute_aggr(rows, attr, func, conditions):
 		if func == 'sum':
-			return sum(rows, attr)
+			return sum(rows, attr, conditions)
 		elif func == 'count':
-			return count(rows)
+			return count(rows, conditions)
 		elif func == 'avg':
-			return avg(rows, attr)
+			return avg(rows, attr, conditions)
 		elif func == 'min':
-			return min(rows, attr)
+			return min(rows, attr, conditions)
 		elif func == 'max':
-			return max(rows, attr)
+			return max(rows, attr, conditions)
 
 
+	def parse_condition(condition): #passing string in the following format: satate
+		equals = condition.find('=')
+		greater = condition.find('>')
+		less = condition.find('<')
+		if equals > -1:
+			condition = [(condition.split('=')[0])] + ['='] + [(condition.split('=')[1])]
+		elif greater > -1:
+			condition = [(condition.split('>')[0])] + ['>'] + [(condition.split('>')[1])]
+		elif less > -1:	
+			condition = [(condition.split('<')[0])] + ['<'] + [(condition.split('<')[1])]
+		return condition
+
+
+	aggregate_functions = ['sum', 'count', 'avg', 'min', 'max']
+	#compute aggregate functions for each group in partition based on F and Sigma
 	for key in partition:
 		rows = partition[key]
-		for agr in F:
-			agr = agr.split('_')
-			func = agr[0]
-			gb_var = agr[1]
-			attr = agr[2]
-			print(compute_aggr(rows, attr, func))
-		#print(max(p,'quant'))
+		computed = []
+		for agr in F: 					#computing each aggregate function in F
+			agr = agr.split('_') 		#spliting it so we get the following format ['sum', '1', 'quant']
+			func = agr[0] 				#'sum'
+			gb_var = agr[1] 			#'1'
+			attr = agr[2] 				#'quant'
+			select_conditions = []
+			for s in Sigma: 			#parsing condition in sigma if it has the same variable as an aggregate function in F
+				s = s.split('_')		#['1', 'state = NJ']
+				if s[0] == gb_var:		
+					condition = parse_condition(s[1])
+					a = condition[0]
+					operator = condition[1]
+					val = condition[2]  #evaluate this val depending on wheather it is an aggregate function of something or a string or a number
+					if val.isnumeric():
+						val = int(val)
+					else:
+						for fun in aggregate_functions:
+							if fun in val:
+								val_attr = val.replace(fun +'(','').replace(')', '')
+								val = compute_aggr(rows, val_attr, fun, [])
+								break
+					select_conditions = select_conditions + [[a,operator, val]]
+					#select_conditions = select_conditions.append([a,operator,val])
+			computed = computed + [compute_aggr(rows, attr, func, select_conditions)]
+		print(key)
+		print(computed)
+		print('\n')
 
 
 
