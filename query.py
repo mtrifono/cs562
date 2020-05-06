@@ -140,8 +140,9 @@ try:
 		else:
 			partition[l] = partition[l] + [row]
 
-
-	def satisfies(row, condition): #condition passed in the following format [state, = , NJ]
+	#Checks if a row satisfies a certain condition
+	def satisfies(row, condition): 
+		#condition passed in the following format eg. [state, = , NJ]
 		sat = False 
 		if (condition[1] == '='):
 			if row[obj[condition[0]]] == condition[2]:
@@ -260,6 +261,8 @@ try:
 			condition = [(condition.split('<')[0])] + ['<'] + [(condition.split('<')[1])]
 		return condition
 
+	#dictionary that contains 
+	computed_aggregates = {}
 
 	aggregate_functions = ['sum', 'count', 'avg', 'min', 'max']
 	#compute aggregate functions for each group in partition based on F and Sigma
@@ -290,9 +293,23 @@ try:
 					select_conditions = select_conditions + [[a,operator, val]]
 					#select_conditions = select_conditions.append([a,operator,val])
 			computed = computed + [compute_aggr(rows, attr, func, select_conditions)]
-		print(key)
-		print(computed)
-		print('\n')
+			computed_aggregates[key] = computed
+
+	print(computed_aggregates) 
+
+	#output for filtering out partition
+	output = {}
+	
+	for key in computed_aggregates:
+		hav_condition = G
+		for i in range(len(F)):
+			hav_condition = hav_condition.replace(F[i], str(computed_aggregates[key][i]))
+		hav_condition.replace('=', '==')
+		if eval(hav_condition):
+			output[key] = partition[key]
+
+	
+		
 
 
 
