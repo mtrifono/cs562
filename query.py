@@ -337,7 +337,7 @@ try:
 			filtered_partition[key] = partition[key]
 
 
-	print(computed_aggregates)
+	# print(computed_aggregates)
 
 	output = [] #Final Output
 	for key in filtered_partition:
@@ -353,7 +353,7 @@ try:
 			select_values = select_values  + [value]
 		output = output + [tuple(select_values)]
 
-	print(output)
+	# print(output)
 
 	table = PrettyTable(S)
 	for rec in output:
