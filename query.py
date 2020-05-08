@@ -1,4 +1,3 @@
-import psycopg2 
 import os.path
 import json
 
@@ -35,7 +34,7 @@ Sigma = [] #select condition-vect
 G = "" #having condition
 
 with open("input.json", "w") as input:
-#GROUP BY CLAUSE
+#GROUP BY CLAUSEs
 	query = query.replace("\n", ' ')
 	group = query.split("group by")[1].split('such that')[0].split(':');
 	gb_attr = group[0].replace(" ", "").split(",")
@@ -58,6 +57,9 @@ with open("input.json", "w") as input:
 			select = select.replace(key + '.', str(varDict[key])+'_').replace('(', '_').replace(')','')
 	S = select.split(',')
 
+	if query.find('where') != -1: 
+		where = query.split("where")[1].split('group by')[0].replace(" ", "")
+		print("where: ", where)
 #for item in select:
 #	index = item.find('(') + 1
 #	if index > 0:
@@ -98,10 +100,12 @@ with open("input.json", "w") as input:
 		"state": 5,
 		"quant": 6,
 	}
+	repr(obj)
 
 	F = F + list(filter(lambda x: (x not in obj) and (x not in F), S)) 
 
 	print("F-vector F: ", F, '\n') 
+
 
 	inp = {
 		'S': S,
@@ -111,8 +115,33 @@ with open("input.json", "w") as input:
 		'Sigma': Sigma,
 		'G': G,
 	}
-
+	print("inp: ", inp)
+	print("type of inp", type(inp))
+	repr(inp)
 	json.dump(inp, input)
+
+
+outstr = """  
+S = [] #select attributes
+n = 0 #number of grouping variables
+V = [] #grouping attributes
+F = [] #F-VECT
+Sigma = [] #select condition-vect
+G = ""
+
+S = inp['S']
+n = inp['n']
+V = inp['V']
+F = inp['F']
+Sigma = inp['Sigma']
+G = inp['G']
+
+print(S)
+print(n)
+print(V)
+print(F)
+print(Sigma)
+print(G)
 
 # connect to the database
 try:
@@ -121,7 +150,7 @@ try:
 								  host = "127.0.0.1",
 								  port = "5432",
 								  database = "postgres")
-	print("\nconnected to postgres\n");
+	print("connected to postgres");
 
 	cursor = connection.cursor()
 	cursor.execute("select * from sales");
@@ -364,5 +393,13 @@ finally:
 		if(connection):
 			cursor.close()
 			connection.close()
-			print("PostgreSQL connection is closed")
+			print("PostgreSQL connection is closed") 
+"""
+
+engine = open('engine.py', 'w+')
+engine.write("import psycopg2\n")
+engine.write("obj = " + repr(obj) + '\n')
+engine.write("inp = " + repr(inp) + '\n')
+engine.write(outstr)
+engine.close()
 
