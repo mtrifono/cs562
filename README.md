@@ -73,6 +73,7 @@ Since both members are using Mac OS, all command examples below may not apply in
 
    ```bash
    pip3 install psycopg2
+   pip3 install PTable
    ```
 
 4. run query.py
@@ -85,10 +86,18 @@ Since both members are using Mac OS, all command examples below may not apply in
 
    ```bash
    Input a query or a file name that contains a query
-   test_input.txt
+   test1.txt
    ```
 
-6. TBC (make use of pgAdmin to simulate?)
+6. check directory contents, you should be able to see "engine.py" generated.
+
+   ```bash
+   python3 engine.py
+   ```
+
+7. final output table will be printed in terminal and also write to a file "output.txt"
+
+   
 
 
 

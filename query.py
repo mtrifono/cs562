@@ -115,8 +115,8 @@ with open("input.json", "w") as input:
 		'Sigma': Sigma,
 		'G': G,
 	}
-	print("inp: ", inp)
-	print("type of inp", type(inp))
+	# print("inp: ", inp)
+	# print("type of inp", type(inp))
 	repr(inp)
 	json.dump(inp, input)
 
@@ -136,12 +136,12 @@ F = inp['F']
 Sigma = inp['Sigma']
 G = inp['G']
 
-print(S)
-print(n)
-print(V)
-print(F)
-print(Sigma)
-print(G)
+# print(S)
+# print(n)
+# print(V)
+# print(F)
+# print(Sigma)
+# print(G)
 
 # connect to the database
 try:
@@ -338,7 +338,6 @@ try:
 
 
 	print(computed_aggregates)
-	print('\n')
 
 	output = [] #Final Output
 	for key in filtered_partition:
@@ -355,6 +354,17 @@ try:
 		output = output + [tuple(select_values)]
 
 	print(output)
+
+	table = PrettyTable(S)
+	for rec in output:
+		table.add_row(rec)
+
+	print(table)
+	
+	result = open('output.txt', 'w+')
+	table_txt = table.get_string()
+	result.write(table_txt)
+	result.close()
 
 	###### create table
 	# create_table_query = '''CREATE TABLE sales
@@ -397,7 +407,7 @@ finally:
 """
 
 engine = open('engine.py', 'w+')
-engine.write("import psycopg2\n")
+engine.write("import psycopg2\nfrom prettytable import PrettyTable\n\n")
 engine.write("obj = " + repr(obj) + '\n')
 engine.write("inp = " + repr(inp) + '\n')
 engine.write(outstr)

@@ -1,4 +1,5 @@
-select x.prod, sum(x.quant), sum(y.quant), sum(z.quant)
-from sales x, sales y, sales z
-where x.prod = y.prod and x.mo = 1 and x.yr = 1997 and y.prod = z.prod and y.mo = 2 and y.year = 1997 and z.mo = 3 and z.year = 1997
-group by x.prod
+select prod, sum(x.quant), sum(y.quant), sum(z.quant)
+from sales
+where yr = "1997"
+group by prod: x, y, z
+such that x.mo = 1, y.mo = 2, z.mo = 3
