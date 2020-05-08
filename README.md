@@ -59,7 +59,9 @@ This is a repo for SIT CS562 final project, where we generate a query processing
 
 Since both members are using Mac OS, all command examples below may not apply in other systems.
 
-1. install postgresql in system, have the server run automatically, and create user 
+1. create table and add date to PostgreSQL maing use of PgAdmin
+
+2. install postgresql in system, have the server run automatically, create user if needed
 
    ```bash
    brew install postgresql
@@ -67,26 +69,26 @@ Since both members are using Mac OS, all command examples below may not apply in
    /usr/local/opt/postgres/bin/createuser -s postgres
    ```
 
-2. install packages
+3. install packages
 
    ```bash
    pip3 install psycopg2
    ```
 
-3. run query.py
+4. run query.py
 
    ```bash
    python3 query.py
    ```
 
-4. manully type input or test_file name (should be in the same directory)
+5. manully type input or test_file name (should be in the same directory)
 
    ```bash
    Input a query or a file name that contains a query
    test_input.txt
    ```
 
-5. TBC (make use of pgAdmin to simulate?)
+6. TBC (make use of pgAdmin to simulate?)
 
 
 

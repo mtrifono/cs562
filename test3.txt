@@ -1,0 +1,5 @@
+select prod, sum(x.quant), sum(y.quant), sum(z.quant)
+from sales
+where yr = "1997"
+group by prod: x, y, z
+such that x.mo = 1, y.mo = 2, z.mo = 3
