@@ -233,9 +233,6 @@ try:
 					max = row[obj[attr]]
 		return max
 
-	print("F", F)
-	print("Sigma", Sigma)
-
 	def compute_aggr(rows, attr, func, conditions):
 		if func == 'sum':
 			return sum(rows, attr, conditions)
@@ -294,11 +291,13 @@ try:
 					#select_conditions = select_conditions.append([a,operator,val])
 			computed = computed + [compute_aggr(rows, attr, func, select_conditions)]
 			computed_aggregates[key] = computed
+			#partition[key] = partition[key] + tuple(computed)
 
-	print(computed_aggregates) 
+	#print(computed_aggregates) 
+	#print(partition)
 
 	#output for filtering out partition
-	output = {}
+	filtered_partition = {}
 	
 	for key in computed_aggregates:
 		hav_condition = G
@@ -306,12 +305,27 @@ try:
 			hav_condition = hav_condition.replace(F[i], str(computed_aggregates[key][i]))
 		hav_condition.replace('=', '==')
 		if eval(hav_condition):
-			output[key] = partition[key]
-
-	
-		
+			filtered_partition[key] = partition[key]
 
 
+	print(computed_aggregates)
+	print('\n')
+
+	output = [] #Final Output
+	for key in filtered_partition:
+		select_values = []
+		for attribute in S: 
+			value = None
+			if attribute in V:
+				index = V.index(attribute) 
+				value = key[index]
+			if attribute in F:
+				index = F.index(attribute)
+				value = computed_aggregates[key][index]
+			select_values = select_values  + [value]
+		output = output + [tuple(select_values)]
+
+	print(output)
 
 	###### create table
 	# create_table_query = '''CREATE TABLE sales
