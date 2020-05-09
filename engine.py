@@ -1,130 +1,9 @@
-import os.path
-import json
+import psycopg2
+from prettytable import PrettyTable
 
-##### Flow:
-# read input from terminal/file
-# organize input and format it into 6 vectors/attributes feeding into phi operator
-# generate another file, where takes the formatted input and compute the final output using phi MF algo 
-
-# read input
-input = input("Input a query or a file name that contains a query\n")
-
-is_file = os.path.isfile(input)
-
-query = ""
-
-if is_file:
-	print("file exists")
-	with open(input, 'r') as file:
-		query = file.read()
-else:
-	query = input
-
-print("The input query is:", query)
-print("\n\n")
-
-query = query.replace('‘', '').replace('’','').replace("'",'').replace('"','').replace('\t','').replace('\n', '')
-
-# format the input
-S = [] #select attributes
-n = 0 #number of grouping variables
-V = [] #grouping attributes
-F = [] #F-VECT
-Sigma = [] #select condition-vect
-G = "" #having condition
-where = ""
-
-with open("input.json", "w") as input:
-#GROUP BY CLAUSEs
-	query = query.replace("\n", ' ')
-	group = query.split("group by")[1].split('such that')[0].split(':');
-	gb_attr = group[0].replace(" ", "").split(",")
-	gb_var = group[1].replace(" ", "").split(",")
-	V = gb_attr
-	n = len(gb_var)
-	print("Grouping attributes: ", V)
-	print("Number of group by variables: ", n)
-
-	varDict = {} #eg. {'x': 1, 'y': 2, 'z': 3}
-	i = 0
-	for v in gb_var:
-		i=i+1
-		varDict[v] = i
-
-	print("Groub by variables: ", varDict, '\n')
-
-	select = query.split("select")[1].split('from')[0].replace(" ", "")
-	for key in varDict:
-			select = select.replace(key + '.', str(varDict[key])+'_').replace('(', '_').replace(')','')
-	S = select.split(',')
-
-	if query.find('where') != -1: 
-		where = query.split("where")[1].split('group by')[0].replace(" ", "")
-		# print("where: ", where)
-		
-#for item in select:
-#	index = item.find('(') + 1
-#	if index > 0:
-#		num = str(varDict[item[index]])
-#		item = num+'_'+item.replace(item[index-1:index+2], '_').replace(')','')
-#	S = S + [item]	
-
-	print("Select attributes S: ", S, '\n') 
-
-	select_condition = query.split("such that")[1].split("having")[0].replace('and', '|').replace('or', '|').replace(' ', '').split('|')
-	for item in select_condition:
-		temp=item.split('.')[0]
-		if temp in varDict:
-			item = item.replace(temp + '.', str(varDict[temp]) + '_')
-		Sigma = Sigma + [item]
-
-	print("Select condition Sigma: ", Sigma, '\n') 
-
-	having_index = query.find('having')
-	if having_index > 0:
-		having = query.split('having')[1]
-		for key in varDict:
-			having = having.replace(key + '.', str(varDict[key])+'_').replace('(', '_').replace(')','')
-		G = having
-		having_vars = having.replace('>','|').replace('<','|').replace('*','|').replace('/','|').replace('=','|').replace('+','|').replace('-','|').replace('not', '|').replace('or','|').replace('and','|').replace(' ','').split('|')
-		for item in having_vars:
-			if not item.isnumeric():
-				F = F + [item]
-
-	print("Having condition G: ", G,'\n') 
-
-	obj = {
-		"cust": 0,
-		"prod": 1,
-		"day" : 2,
-		"month": 3,
-		"year" : 4,
-		"state": 5,
-		"quant": 6,
-	}
-	repr(obj)
-
-	F = F + list(filter(lambda x: (x not in obj) and (x not in F), S)) 
-
-	print("F-vector F: ", F, '\n') 
-
-
-	inp = {
-		'S': S,
-		'n': n,
-		'V': V,
-		'F': F,
-		'Sigma': Sigma,
-		'G': G,
-		'Where': where
-	}
-	# print("inp: ", inp)
-	# print("type of inp", type(inp))
-	repr(inp)
-	json.dump(inp, input)
-
-
-outstr = """  
+obj = {'cust': 0, 'prod': 1, 'day': 2, 'month': 3, 'year': 4, 'state': 5, 'quant': 6}
+inp = {'S': ['cust', 'sum_1_quant', 'sum_2_quant', 'sum_3_quant'], 'n': 3, 'V': ['cust'], 'F': ['sum_1_quant', 'sum_2_quant', 'avg_1_quant', 'avg_3_quant', 'sum_3_quant'], 'Sigma': ['1_state=NY', '2_state=NJ', '3_state=CT'], 'G': ' sum_1_quant > 2 * sum_2_quant or avg_1_quant > avg_3_quant ', 'Where': ''}
+  
 S = [] #select attributes
 n = 0 #number of grouping variables
 V = [] #grouping attributes
@@ -147,7 +26,7 @@ where = inp['Where']
 # print(F)
 # print(Sigma)
 # print(G)
-# print(where)
+print(where)
 
 # connect to the database
 try:
@@ -417,12 +296,3 @@ finally:
 			cursor.close()
 			connection.close()
 			print("PostgreSQL connection is closed") 
-"""
-
-engine = open('engine.py', 'w+')
-engine.write("import psycopg2\nfrom prettytable import PrettyTable\n\n")
-engine.write("obj = " + repr(obj) + '\n')
-engine.write("inp = " + repr(inp) + '\n')
-engine.write(outstr)
-engine.close()
-
