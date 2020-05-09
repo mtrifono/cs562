@@ -1,1 +1,0 @@
-{"S": ["cust", "sum_1_quant", "sum_2_quant", "sum_3_quant"], "n": 3, "V": ["cust"], "F": ["sum_1_quant", "sum_2_quant", "avg_1_quant", "avg_3_quant", "sum_3_quant"], "Sigma": ["1_state=NY", "2_state=NJ", "3_state=CT"], "G": " sum_1_quant > 2 * sum_2_quant or avg_1_quant > avg_3_quant ", "Where": ""}
