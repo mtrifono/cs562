@@ -1,0 +1,5 @@
+select cust, prod, avg(x.quant), avg(y.quant), avg(z.quant)
+from sales
+group by cust, prod: x, y, z
+such that x.state = 'NJ' and y.state = 'NY' and z.state = 'CT'
+having avg(x.quant) > avg(y.quant) / 3
